@@ -21,6 +21,19 @@ func walk(n *yaml.Node, depth int) {
 	}
 }
 
+func findMapValueNode(n *yaml.Node, key string) *yaml.Node {
+	for i, child := range n.Content {
+		//TODO: interleave key and value
+		if child.Kind == yaml.ScalarNode && child.Value == key {
+			if i >= len(n.Content)-1 {
+				return nil
+			}
+			return n.Content[i+1]
+		}
+	}
+	return nil
+}
+
 func run() error {
 	f, err := os.Open("testdata/fixture1.yaml")
 	if err != nil {
@@ -39,6 +52,27 @@ func run() error {
 			}
 			return fmt.Errorf("could not decode: %w", err)
 		}
+
+		// extract a value in the tree
+		var v struct {
+			Kind string `yaml:"kind"`
+		}
+		if err := n.Decode(&v); err != nil {
+			return fmt.Errorf("could not decode a value: %w", err)
+		}
+		log.Printf("v=%+v", v)
+
+		// mutate the value in the tree
+		kindNode := findMapValueNode(n.Content[0], "kind")
+		if kindNode != nil {
+			log.Printf("mutating node %+v", kindNode)
+			kindNode.Value = "FOO"
+		}
+		// NOTE: this overwrites the node and unknown contents are removed!
+		//v.Kind = "FOO"
+		//if err := n.Encode(&v); err != nil {
+		//	return fmt.Errorf("could not encode from the subtree: %w", err)
+		//}
 
 		// dump the document tree
 		walk(&n, 0)
