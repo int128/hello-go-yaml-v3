@@ -20,6 +20,13 @@ spec:
           image: nginx:1.14.2
           ports:
             - containerPort: 80
+        - name: envoy
+          image: envoyproxy/envoy
+          command:
+            - /bin/sh
+            # dummy command
+            - -c
+            - uname
 ---
 # https://kubernetes.io/docs/concepts/services-networking/connect-applications-service/
 apiVersion: v1
